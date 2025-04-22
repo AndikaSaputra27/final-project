@@ -1,30 +1,23 @@
-// /booking-system/main.go
-
 package main
 
 import (
 	"booking-system/internal/controller"
-	"booking-system/internal/repository"
-	"booking-system/internal/service"
 	"log"
 
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	// Inisialisasi repository, service, dan controller
-	repo := repository.NewInMemoryBookingRepository()
-	bookingService := service.NewBookingService(repo)
-	bookingController := controller.NewBookingController(bookingService)
-
-	// Setup Gin
 	r := gin.Default()
 
-	// Define routes
+	bookingController := controller.NewBookingController()
+
+	// Routing
 	r.POST("/book", bookingController.BookServiceHandler)      // Untuk pemesanan layanan
 	r.GET("/booking/:id", bookingController.GetBookingHandler) // Untuk melihat booking berdasarkan ID
+	r.GET("/bookings", bookingController.GetBookingHandler)    // Semua bookings (jika ada logic untuk ini juga)
 
-	// Jalankan server pada port 8080
+	// Jalankan server
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}

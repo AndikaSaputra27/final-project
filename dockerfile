@@ -1,18 +1,11 @@
-# Gunakan base image Go
-FROM golang:1.21
+# Gunakan versi Go yang sesuai dengan go.mod
+FROM golang:1.23.4 AS builder
 
-# Set direktori kerja di dalam container
 WORKDIR /app
-
-# Copy semua file ke dalam container
-COPY . .
-
-# Download dependensi
+COPY go.mod go.sum ./
 RUN go mod tidy
 
-# Build aplikasi
+COPY . .
 RUN go build -o main .
 
-# Jalankan aplikasi
-CMD ["./main"]
-
+CMD ["/app/main"]
