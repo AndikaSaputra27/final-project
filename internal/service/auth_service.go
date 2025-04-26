@@ -1,23 +1,33 @@
 package service
 
 import (
-	"time"
-
-	"github.com/dgrijalva/jwt-go"
+	"errors"
 )
 
-func GenerateJWT(secretKey string) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id": 1,
-		"exp":     time.Now().Add(time.Hour * 1).Unix(),
+// User adalah struct untuk mendefinisikan user yang melakukan login
+type User struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// AuthService adalah service yang menangani autentikasi pengguna
+type AuthService struct {
+	// Bisa ditambah field lain jika diperlukan, misalnya koneksi ke database
+}
+
+// NewAuthService membuat instance baru dari AuthService
+func NewAuthService() *AuthService {
+	return &AuthService{}
+}
+
+// Authenticate memeriksa username dan password untuk autentikasi
+func (s *AuthService) Authenticate(username, password string) (*User, error) {
+	// Ini hanya contoh sederhana, kamu bisa mengganti logika ini dengan pengecekan ke database
+	if username == "admin" && password == "password" {
+		return &User{
+			Username: username,
+			Password: password,
+		}, nil
 	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	signedToken, err := token.SignedString([]byte(secretKey))
-	if err != nil {
-		return "", err
-	}
-
-	return signedToken, nil
+	return nil, errors.New("invalid credentials")
 }

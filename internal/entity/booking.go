@@ -1,9 +1,10 @@
 package entity
 
+// Booking struct represents a booking entity
 type Booking struct {
-	ID        uint   `json:"id" gorm:"primaryKey"`
-	UserID    uint   `json:"user_id"`
-	ServiceID uint   `json:"service_id"`
-	Time      string `json:"time"`
-	Status    string `json:"status"`
+	ID     string  `json:"id"`
+	Name   string  `json:"name"`
+	Date   string  `json:"date"`
+	Amount float64 `json:"amount"`
+	Status string  `json:"status"` // Added Status field
 }

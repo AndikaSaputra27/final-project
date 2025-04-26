@@ -3,17 +3,18 @@ package controller
 import (
 	"net/http"
 
-	"github.com/AndikaSaputra27/booking-system/entity"
-	"github.com/AndikaSaputra27/booking-system/service"
+	"github.com/AndikaSaputra27/booking-system/internal/entity"
+	"github.com/AndikaSaputra27/booking-system/internal/service"
+
 	"github.com/gin-gonic/gin"
 )
 
 type ServiceController struct {
-	ServiceService service.ServiceService
+	BookingService service.BookingService
 }
 
-func NewServiceController(ss service.ServiceService) *ServiceController {
-	return &ServiceController{ServiceService: ss}
+func NewServiceController(ss service.BookingService) *ServiceController {
+	return &ServiceController{BookingService: ss}
 }
 
 func (sc *ServiceController) CreateService(c *gin.Context) {
@@ -22,7 +23,7 @@ func (sc *ServiceController) CreateService(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := sc.ServiceService.CreateService(&svc); err != nil {
+	if err := sc.BookingService.CreateService(&svc); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat service"})
 		return
 	}

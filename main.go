@@ -1,24 +1,24 @@
 package main
 
 import (
-	"booking-system/internal/controller"
-	"log"
-
+	"github.com/AndikaSaputra27/booking-system/internal/controller"
+	"github.com/AndikaSaputra27/booking-system/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	r := gin.Default()
+	// Membuat instance dari AuthService
+	authService := service.NewAuthService()
 
-	bookingController := controller.NewBookingController()
+	// Membuat instance dari AuthController dengan mengirimkan AuthService
+	authController := controller.NewAuthController(authService)
 
-	// Routing
-	r.POST("/book", bookingController.BookServiceHandler)      // Untuk pemesanan layanan
-	r.GET("/booking/:id", bookingController.GetBookingHandler) // Untuk melihat booking berdasarkan ID
-	r.GET("/bookings", bookingController.GetBookingHandler)    // Semua bookings (jika ada logic untuk ini juga)
+	// Setup Gin Router
+	router := gin.Default()
+
+	// Endpoint login
+	router.POST("/login", authController.Login)
 
 	// Jalankan server
-	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("Error starting server: %v", err)
-	}
+	router.Run(":8080")
 }

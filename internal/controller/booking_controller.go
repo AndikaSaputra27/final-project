@@ -6,18 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type BookingController struct {
-	// tambahkan dependency kalau ada, misalnya service
+// Tampilkan halaman user
+func ShowUserPage(c *gin.Context) {
+	c.HTML(http.StatusOK, "user.html", gin.H{
+		"title": "Halaman User",
+	})
 }
 
-func NewBookingController() *BookingController {
-	return &BookingController{}
-}
-
-// Tambahkan ini:
-func (bc *BookingController) GetBookingHandler(c *gin.Context) {
-	// sementara untuk testing
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Get booking success!",
+// Tampilkan halaman admin
+func ShowAdminPage(c *gin.Context) {
+	c.HTML(http.StatusOK, "admin.html", gin.H{
+		"title": "Halaman Admin",
 	})
 }

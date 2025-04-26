@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/AndikaSaputra27/booking-system/entity"
+	"github.com/AndikaSaputra27/booking-system/internal/entity"
 	"gorm.io/gorm"
 )
 
