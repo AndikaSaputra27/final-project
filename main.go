@@ -1,24 +1,27 @@
 package main
 
 import (
+	"github.com/AndikaSaputra27/booking-system/internal/config"
 	"github.com/AndikaSaputra27/booking-system/internal/controller"
-	"github.com/AndikaSaputra27/booking-system/internal/service"
+	"github.com/AndikaSaputra27/booking-system/internal/middleware"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	// Membuat instance dari AuthService
-	authService := service.NewAuthService()
+	r := gin.Default()
 
-	// Membuat instance dari AuthController dengan mengirimkan AuthService
-	authController := controller.NewAuthController(authService)
+	// Public routes
+	r.POST("/register", controller.Register)
+	r.POST("/login", controller.Login)
 
-	// Setup Gin Router
-	router := gin.Default()
+	// Protected routes
+	protected := r.Group("/api")
+	protected.Use(middleware.AuthMiddleware())
+	{
+		protected.GET("/profile", controller.GetUserProfile)
+	}
 
-	// Endpoint login
-	router.POST("/login", authController.Login)
+	config.ConnectDB() // pastikan config.DB sudah terhubung
 
-	// Jalankan server
-	router.Run(":8080")
+	r.Run(":8080")
 }

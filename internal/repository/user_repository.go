@@ -6,7 +6,8 @@ import (
 )
 
 type UserRepository interface {
-	Create(user *entity.User) error
+	CreateUser(user *entity.User) (*entity.User, error)
+	GetUserByEmail(email string) (*entity.User, error)
 }
 
 type userRepository struct {
@@ -17,6 +18,13 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 	return &userRepository{db}
 }
 
-func (r *userRepository) Create(user *entity.User) error {
-	return r.db.Create(user).Error
+func (r *userRepository) CreateUser(user *entity.User) (*entity.User, error) {
+	err := r.db.Create(user).Error
+	return user, err
+}
+
+func (r *userRepository) GetUserByEmail(email string) (*entity.User, error) {
+	var user entity.User
+	err := r.db.Where("email = ?", email).First(&user).Error
+	return &user, err
 }

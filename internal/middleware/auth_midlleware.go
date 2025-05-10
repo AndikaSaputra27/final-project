@@ -3,48 +3,54 @@ package middleware
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte("your_secret_key") // Simpan dengan aman
+var jwtSecret = []byte("secret") // Ubah jadi lebih aman via env di production
 
-// Claims JWT yang disesuaikan
-type JWTClaims struct {
-	UserID string `json:"user_id"`
-	Role   string `json:"role"`
-	jwt.RegisteredClaims
-}
-
-// Middleware untuk verifikasi JWT token
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
-
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token not found"})
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization format must be Bearer {token}"})
 			c.Abort()
 			return
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-
-		claims := &JWTClaims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, jwt.ErrSignatureInvalid
+			}
 			return jwtSecret, nil
 		})
 
 		if err != nil || !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			c.Abort()
 			return
 		}
 
-		// Simpan claims ke context agar bisa digunakan di controller
-		c.Set("userID", claims.UserID)
-		c.Set("role", claims.Role)
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			c.Set("userID", claims["user_id"])
+			c.Set("username", claims["username"])
+			c.Set("role", claims["role"])
+		}
 
 		c.Next()
 	}
+}
+
+func GenerateToken(userID uint, username, role string) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id":  userID,
+		"username": username,
+		"role":     role,
+		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
 }

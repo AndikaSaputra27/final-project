@@ -2,32 +2,39 @@ package service
 
 import (
 	"errors"
+
+	"github.com/AndikaSaputra27/booking-system/internal/entity"
+	"github.com/AndikaSaputra27/booking-system/internal/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
-// User adalah struct untuk mendefinisikan user yang melakukan login
-type User struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+type AuthService interface {
+	Register(user *entity.User) (*entity.User, error)
+	Login(email, password string) (*entity.User, error)
 }
 
-// AuthService adalah service yang menangani autentikasi pengguna
-type AuthService struct {
-	// Bisa ditambah field lain jika diperlukan, misalnya koneksi ke database
+type authService struct {
+	userRepo repository.UserRepository
 }
 
-// NewAuthService membuat instance baru dari AuthService
-func NewAuthService() *AuthService {
-	return &AuthService{}
+func NewAuthService(userRepo repository.UserRepository) AuthService {
+	return &authService{userRepo}
 }
 
-// Authenticate memeriksa username dan password untuk autentikasi
-func (s *AuthService) Authenticate(username, password string) (*User, error) {
-	// Ini hanya contoh sederhana, kamu bisa mengganti logika ini dengan pengecekan ke database
-	if username == "admin" && password == "password" {
-		return &User{
-			Username: username,
-			Password: password,
-		}, nil
+func (s *authService) Register(user *entity.User) (*entity.User, error) {
+	hashPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	user.Password = string(hashPassword)
+	return s.userRepo.CreateUser(user)
+}
+
+func (s *authService) Login(email, password string) (*entity.User, error) {
+	user, err := s.userRepo.GetUserByEmail(email)
+	if err != nil {
+		return nil, errors.New("email not found")
 	}
-	return nil, errors.New("invalid credentials")
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return nil, errors.New("invalid password")
+	}
+	return user, nil
 }

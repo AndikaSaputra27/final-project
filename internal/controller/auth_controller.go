@@ -3,41 +3,42 @@ package controller
 import (
 	"net/http"
 
-	"github.com/AndikaSaputra27/booking-system/internal/service"
+	"github.com/AndikaSaputra27/booking-system/internal/config"
+	"github.com/AndikaSaputra27/booking-system/internal/dto"
+	"github.com/AndikaSaputra27/booking-system/internal/entity"
+	"github.com/AndikaSaputra27/booking-system/internal/middleware"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthController struct {
-	AuthService *service.AuthService
-}
+func Login(c *gin.Context) {
+	var req dto.LoginRequest
+	var user entity.User
 
-// NewAuthController creates a new AuthController
-func NewAuthController(authService *service.AuthService) *AuthController {
-	return &AuthController{
-		AuthService: authService,
-	}
-}
-
-// Login handles user login requests
-func (c *AuthController) Login(ctx *gin.Context) {
-	var loginRequest struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
-
-	if err := ctx.ShouldBindJSON(&loginRequest); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	user, err := c.AuthService.Authenticate(loginRequest.Username, loginRequest.Password)
+	result := config.DB.Where("username = ?", req.Username).First(&user)
+	if result.Error != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		return
+	}
+
+	token, err := middleware.GenerateToken(user.ID, user.Username, user.Role)
 	if err != nil {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
-		"user":    user,
+		"token":   token,
 	})
 }

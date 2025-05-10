@@ -3,29 +3,48 @@ package controller
 import (
 	"net/http"
 
+	"github.com/AndikaSaputra27/booking-system/internal/config"
+	"github.com/AndikaSaputra27/booking-system/internal/dto"
 	"github.com/AndikaSaputra27/booking-system/internal/entity"
-	"github.com/AndikaSaputra27/booking-system/internal/service"
-
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
-type ServiceController struct {
-	BookingService service.BookingService
-}
+func Register(c *gin.Context) {
+	var req dto.RegisterRequest
 
-func NewServiceController(ss service.BookingService) *ServiceController {
-	return &ServiceController{BookingService: ss}
-}
-
-func (sc *ServiceController) CreateService(c *gin.Context) {
-	var svc entity.Service
-	if err := c.ShouldBindJSON(&svc); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
-	if err := sc.BookingService.CreateService(&svc); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Gagal membuat service"})
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
 		return
 	}
-	c.JSON(http.StatusCreated, svc)
+
+	user := entity.User{
+		Username: req.Username,
+		Password: string(hashedPassword),
+		Role:     req.Role,
+	}
+
+	if err := config.DB.Create(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User registered successfully"})
+}
+
+func GetUserProfile(c *gin.Context) {
+	username := c.GetString("username")
+	role := c.GetString("role")
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":  "Profile fetched successfully",
+		"username": username,
+		"role":     role,
+	})
 }
